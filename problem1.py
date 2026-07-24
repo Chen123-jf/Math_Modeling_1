@@ -223,7 +223,7 @@ def print_top50(result):
     print(sep_line)
 
     for _, row in top50.iterrows():
-        print("{:4d} {:>10} {:>5} {:>14.4f} {:>12.0f} {:>12f} {:>12f} {:>12f} {:>10f}".format(
+        print("{:4d} {:>10} {:>5} {:>14.4f} {:>12.0f} {:>12.4f} {:>12.4f} {:>12.4f} {:>10.4f}".format(
             int(row["排名"]),
             row["供应商ID"],
             row["材料分类"],
