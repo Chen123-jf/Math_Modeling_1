@@ -92,7 +92,7 @@ for cat in ["A", "B", "C"]:
     subset = selected_df[selected_df["材料分类"] == cat]
     mat_total_supply[cat] = subset["avg_supply"].sum()
 
-# 进货/订货比(历史中位数): 用于估算实际到货
+# 供货/订货比(历史中位数): 用于估算实际接收量
 supply_ratio = np.where(ord_vals > 0, sup_vals / np.maximum(ord_vals, 1), np.nan)
 median_ratio = np.nan_to_num(np.nanmedian(supply_ratio, axis=1), nan=1.0)
 
@@ -113,7 +113,7 @@ avg_loss = np.mean(trans_avg_loss)
 
 # 每周订购逻辑:
 # 优先从A供应商订, A不够再订C, 还不够再订B
-# 接收量 = 订单量 * 供货比 * (1-损耗率)
+# 接收量 = 订货量 * 供货比 * (1-损耗率)
 # 库存 = 上期库存 + 到货 - 消耗(按到货材料配比换算)
 
 print("最优订购配比: A > C > B")
@@ -148,7 +148,7 @@ order_a = min(order_a, mat_total_supply["A"])
 order_c = min(order_c, mat_total_supply["C"])
 order_b = min(order_b, mat_total_supply["B"])
 
-# 如果还不足, 尽可能多订
+# 如果总订购量小于最小需求（全用A）, 尽可能多订
 if order_a + order_c + order_b < MIN_RAW_NEED:
     deficit = MIN_RAW_NEED - (order_a + order_c + order_b)
     if order_a < mat_total_supply["A"]:

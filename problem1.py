@@ -57,34 +57,34 @@ def extract_supplier_features(df, week_cols, n_weeks):
     total_supply = sup_vals.sum(axis=1)
 
     # 指标2: 供货活跃度
-    # 有供货的周数占比。连续5年每周都供应的供应商
+    # 有供货的周数占比。活跃度为1.0表示近5年每周都供应的供应商
     active_weeks = (sup_vals > 0).sum(axis=1)
     nw = float(n_weeks)
     activeness = active_weeks / nw
 
     # 指标3: 供货稳定性
     # 用变异系数的倒数。供货量忽大忽小的供应商，稳定性低
-    mean_supply = sup_vals.mean(axis=1)
-    std_supply = sup_vals.std(axis=1, ddof=0)
-    cv_vals = np.where(mean_supply > 1, std_supply / mean_supply, 10.0)
-    cv_vals = np.clip(cv_vals, 0, 10)
-    stability = 1.0 / (cv_vals + 0.01)
+    mean_supply = sup_vals.mean(axis=1)     # 均值
+    std_supply = sup_vals.std(axis=1, ddof=0)  # 标准差  
+    cv_vals = np.where(mean_supply > 1, std_supply / mean_supply, 10.0) # 均值大于1时，取变异系数，否则取10
+    cv_vals = np.clip(cv_vals, 0, 10) # 变异系数在0到10之间
+    stability = 1.0 / (cv_vals + 0.01)  # 分母+0.01避免除零，越稳定越大
 
     # 指标4: 供货可靠性
     # 统计当企业下了订单时，供应商能不能"交足货"的概率
     # >= 订货量就算满足
     ordered = ord_vals > 0
-    sufficient = (sup_vals >= ord_vals) & ordered
-    order_weeks = ordered.sum(axis=1)
-    reliability = np.where(order_weeks > 0, sufficient.sum(axis=1) / order_weeks, 0)
+    sufficient = (sup_vals >= ord_vals) & ordered # 供货量大于等于订货量，且订货量大于0
+    order_weeks = ordered.sum(axis=1)   # 订货周数
+    reliability = np.where(order_weeks > 0, sufficient.sum(axis=1) / order_weeks, 0)    # 订货周数大于0时，求供货满足率，从未被订货时为0
 
     # 指标5: 供货充足率
     # 用中位数而不是均值，避免某次超量10倍拉高平均的情况
-    ratios = np.where(ordered, sup_vals / np.maximum(ord_vals, 1), np.nan)
-    fulfillment = np.nanmedian(ratios, axis=1)
-    fulfillment = np.nan_to_num(fulfillment, nan=0)
+    ratios = np.where(ordered, sup_vals / np.maximum(ord_vals, 1), np.nan)  # 订货量大于0时，求供货量占订货量的比例，否则为nan
+    fulfillment = np.nanmedian(ratios, axis=1) # 求中位数
+    fulfillment = np.nan_to_num(fulfillment, nan=0) # 充足率为nan时，说明从未被订货过，充足率为0
 
-    # 看一眼数值分布，确认没出异常
+    # 验证数值分布是否异常
     print("\n指标范围检查:")
     print("  总供货量: {} ~ {}".format(total_supply.min(), total_supply.max()))
     print("  活跃度:   {:.3f} ~ {:.3f}".format(activeness.min(), activeness.max()))
